@@ -3,7 +3,7 @@ const fss = require('fs');
 const meka = require('./createMekamount.js');
 const web3 =  require("@solana/web3.js");
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 5000;
 
 async function connectToSolana(){
     // //Solana Stuff

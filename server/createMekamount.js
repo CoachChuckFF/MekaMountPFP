@@ -7,7 +7,6 @@ const path = require('path');
 const mergeImages = require('merge-images');
 const sharp = require('sharp');
 const { Canvas, Image } = require('canvas');
-const solanaWeb3 = require('@solana/web3.js');
 
 
 function getNFTOwner(ownerAddress, nftAddress){
