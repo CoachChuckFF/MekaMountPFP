@@ -3,7 +3,7 @@ const fss = require('fs');
 const meka = require('./createMekamount.js');
 const web3 =  require("@solana/web3.js");
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 
 async function connectToSolana(){
     // //Solana Stuff
@@ -23,7 +23,7 @@ function spinUpServer(){
     app.listen(port, () => console.log(`Listening on port ${port}`));
 
     //Set Hook
-    app.get('/sol/:sol/meka/:meka/pfp/:pfp/scale/:scale', (req, res) => {
+    app.get('/server/sol/:sol/meka/:meka/pfp/:pfp/scale/:scale', (req, res) => {
         try {
             console.log(`-- Buidling for: ${req.params.sol}...`);
             meka.buildMekamount(
@@ -46,7 +46,7 @@ function spinUpServer(){
         }
     });
 
-    app.get('/credits', (req, res) => {
+    app.get('/server/credits', (req, res) => {
         try {
             res.send({ credits: creditsLeft });
         } catch {
@@ -54,7 +54,7 @@ function spinUpServer(){
         }
     });
 
-    app.get('/clear/:clear', (req, res) => {
+    app.get('/server/clear/:clear', (req, res) => {
         try{
             fss.unlink(`./img/${req.params.clear}.png`, ()=>{});
             res.send({ theDeed: "is done" });
