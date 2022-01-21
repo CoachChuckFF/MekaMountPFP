@@ -15,7 +15,7 @@ services:
   instance_size_slug: basic-xs
   name: meka-mount-pfp
   routes:
-  - path: /web
+  - path: /
   run_command: npm start
   source_dir: /web
 - environment_slug: node-js
@@ -23,7 +23,7 @@ services:
     branch: main
     deploy_on_push: true
     repo: TheOnlyCaky/MekaMountPFP
-  http_port: 8080
+  http_port: 5000
   instance_count: 1
   instance_size_slug: basic-xxs
   name: express

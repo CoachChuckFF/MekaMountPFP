@@ -131,7 +131,7 @@ const App = () => {
 
   const getCreditsLeft = async () => {
     try {
-      const response = await fetch(`/credits`);
+      const response = await fetch(`/server/credits`);
       const data = await response.json();
       setCreditsLeft(data.credits);
     } catch {
@@ -141,7 +141,7 @@ const App = () => {
 
   const clearIMG = async () => {
     try {
-      const response = await fetch(`/clear/${walletAddress}`);
+      const response = await fetch(`/server/clear/${walletAddress}`);
       const data = await response.json();
       console.log(data);
     } catch {
@@ -157,7 +157,7 @@ const App = () => {
     } else if(!isBuilding){
       setIsBuilding(true);
       try {
-        const response = await fetch(`/sol/${walletAddress}/meka/${mekAddress.address}/pfp/${pfpAddress.address}/scale/${pfpScale}`);
+        const response = await fetch(`/server/sol/${walletAddress}/meka/${mekAddress.address}/pfp/${pfpAddress.address}/scale/${pfpScale}`);
         const blob = await response.blob();
 
         if(blob.size < 500){
