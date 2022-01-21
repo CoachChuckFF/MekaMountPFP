@@ -30,7 +30,7 @@ function spinUpServer(){
                 req.params.sol,
                 req.params.meka,
                 req.params.pfp,
-                parseFloat(req.params.scale) ?? meka.defaultpfpScale,
+                parseFloat(req.params.scale),
                 (filepath)=> {
                     creditsLeft--;
                     console.log(`-- SUCCESS for: ${req.params.sol}`);
