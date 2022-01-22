@@ -19,7 +19,7 @@ const App = () => {
   const [pfpAddress, setPfpAddress] = useState(null);
   const [pfpScale, setPfpScale] = useState(0.15);
   const [isBuilding, setIsBuilding] = useState(false);
-  const [didDownload, setDidDownload] = useState(false);
+  const [buildCount, setBuildCount] = useState(3);
   const [isGettingNFTS, setIsGettingNFTs] = useState(false);
   const [nftList, setNftList] = useState([]);
 
@@ -150,8 +150,10 @@ const App = () => {
   }
 
   const downloadNewMek = async () => {
-    if(didDownload){
-      alert('You just downloaded!');
+    if(creditsLeft <= 0){
+      alert('No more community credits! Tweet @Coach Chuck to request more');
+    } else if(buildCount <= 0){
+      alert('No more builds! (But... you could refresh...)');
     } else if(mekAddress == null || pfpAddress == null){
       alert('Need to pick both a Mekamount and PFP');
     } else if(!isBuilding){
@@ -169,7 +171,7 @@ const App = () => {
           }
         } else {
           download(blob, "mekamount.png");
-          setDidDownload(true);
+          setBuildCount(buildCount - 1);
           getCreditsLeft();
           clearIMG();
         }
@@ -184,12 +186,6 @@ const App = () => {
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth' // for smoothly scrolling
-    });
-  };
 
   const selectNFT = (nft) => {
 
@@ -199,8 +195,11 @@ const App = () => {
       setPfpAddress(nft);
     }
     
-    // scrollToTop();
   }
+
+  const mekSort = (nft) => {return nft.name.includes("Mekamounts");}
+  const pfpSort = (nft) => {return !nft.name.includes("Mekamounts");}
+  const getPFPList = (sortFunction) => {return nftList.filter(sortFunction);}
 
   const renderConnectedContainer = () => (
     <div className="connected-container">
@@ -216,13 +215,13 @@ const App = () => {
       </div>
       <div className='mini-spacing'></div>
       <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isBuilding}>
-        {didDownload ? "Complete!" : (isBuilding ? "Building..." : "Build")}
+        {(isBuilding ? `Building...` : `Build [${buildCount}]`)}
       </button>
       <div className='spacing'></div>
-      <p className="sub-text">Choose your Mekamount...</p>
+      <p className="sub-text">Hello {walletAddress}</p>
+      <a href='https://www.magiceden.io/marketplace/mekamounts'><p className="sub-text">{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
       <div className="gif-grid">
-        {/* Map through gifList instead of TEST_GIFS */}
-        {nftList.filter((nft) => { return nft.name.includes("Mekamounts");}).map((nft) => (
+        {getPFPList(mekSort).map((nft) => (
           <div className="gif-item" key={nft.url} onClick={() => {selectNFT(nft)}}>
             <img src={nft.url} alt={nft.url} />
             <p className="sub-text">{nft.name}</p>
@@ -230,10 +229,9 @@ const App = () => {
           </div>
         ))}
       </div>
-      <p className="sub-text">Choose your PFP...</p>
+      <a href='https://www.magiceden.io/marketplace/pesky_penguins'><p className="sub-text">{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
       <div className="gif-grid">
-        {/* Map through gifList instead of TEST_GIFS */}
-        {nftList.filter((nft) => { return !nft.name.includes("Mekamounts");}).map((nft) => (
+        {getPFPList(pfpSort).map((nft) => (
           <div className="gif-item" key={nft.url} onClick={() => {selectNFT(nft)}}>
             <img src={nft.url} alt={nft.url} />
             <p className="sub-text">{nft.name}</p>
@@ -279,20 +277,6 @@ const App = () => {
     }
   };
 
-  // const onInputChange = (event) => {
-  //   const { value } = event.target;
-  //   setInputValue(value);
-  // };
-  
-  const sendGif = async () => {
-    // if (inputValue.length > 0) {
-    //   console.log('Gif link:', inputValue);
-    //   setGifList([...gifList, inputValue]);
-    //   setInputValue('');
-    // } else {
-    //   console.log('Empty input. Try again.');
-    // }
-  };
 
   const renderNotConnectedContainer = () => (
     <button
@@ -315,7 +299,7 @@ const App = () => {
   
   useEffect(() => {
     if (walletAddress) {
-      console.log('Fetching Mekamounts...');
+      console.log('Fetching NFTs...');
       
       // Call Solana program here.
       grabAllNFTs();
@@ -330,7 +314,8 @@ const App = () => {
 			{/* This was solely added for some styling fanciness */}
 			<div className={walletAddress ? 'authed-container' : 'container'}>
         <div className="header-container">
-          <p className="header">🦾 Mekamount PFP Portal [CR Left: {creditsLeft}]</p>
+          <p className="header">🦾 Mekamount PFP Portal 🦾</p>
+          <p className="header">[CR Left: {creditsLeft}]</p>
           <p className="sub-text">
             N F T ✨
           </p>

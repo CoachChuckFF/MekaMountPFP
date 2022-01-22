@@ -9,7 +9,7 @@ const sharp = require('sharp');
 const { Canvas, Image } = require('canvas');
 
 
-function getNFTOwner(ownerAddress, nftAddress){
+function getNFTOwner(nftAddress){
   return new Promise((resolve, reject) => {
     const parameters = {
       offset: 0,
@@ -167,11 +167,11 @@ const pfpCenterX = 355;
 const pfpBottomY = 560;
 function getPFPSize(scale){return Math.round((mekSize * scale)) + (2 * (Math.round(mekSize * scale) % 2));}
 
-function buildMekamount(sol, mekaNFT, pfpNFT, pfpScale, success, failure){
+function buildMekamount(sol, mekaNFT, pfpNFT, pfpScale, buildCount, success, failure){
 
   Promise.all([
-    getNFTOwner(sol, mekaNFT),
-    getNFTOwner(sol, pfpNFT),
+    getNFTOwner(mekaNFT),
+    getNFTOwner(pfpNFT),
   ])
   .then((owners)=>{
 
@@ -205,7 +205,7 @@ function buildMekamount(sol, mekaNFT, pfpNFT, pfpScale, success, failure){
       let mekFilePath = `./img/${sol}_mek.png`;
       let pfpAlphaFilePath = `./img/${sol}_pfp_alpha.png`;
       let pfpMiniAlphaFilePath = `./img/${sol}_pfp_mini_alpha.png`;
-      let finalFilePath = `./img/${sol}${fileTail}`;
+      let finalFilePath = `./img/${sol}_${buildCount}_${fileTail}`;
     
       Promise.all([
         downloadIMG(pfpURL, pfpFilePath),
