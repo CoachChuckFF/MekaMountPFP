@@ -117,8 +117,8 @@
   grid-template-columns: auto auto; 
   grid-gap: 1.5rem;
   justify-items: center;
-  margin-right: 2%;
-  margin-left: 2%;
+  margin-right: 13%;
+  margin-left: 13%;
   padding: 0;
 }
 
@@ -158,6 +158,50 @@ button[disabled]{
   animation: gradient-animation 4s ease infinite;
 }
 
+.selection-overlay {
+  position: absolute;
+  bottom: 0;
+  background: rgb(0, 0, 0);
+  background: rgba(0, 0, 0, 0.5); /* Black see-through */
+  color: #f1f1f1;
+  width: 100%;
+  height: 100%;
+  transition: .5s ease;
+  opacity:0;
+  color: white;
+  border-radius: 10px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.selected {
+  position: absolute;
+  bottom: 0;
+  background: rgb(8, 90, 29);
+  background: rgba(11, 161, 74, 0.5); /* Black see-through */
+  color: #f1f1f1;
+  transition: .5s ease;
+  width: 100%;
+  height: 100%;
+  opacity:1;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* When you mouse over the container, fade in the overlay title */
+.overlay:hover .selection-overlay {
+  opacity: 1;
+}
+
+.overlay:hover .selected {
+  background: rgb(15, 168, 53);
+  background: rgba(14, 194, 89, 0.5); /* Black see-through */
+  opacity: 1;
+}
+
 .connected-container button {
   height: 50px;
 }
@@ -175,4 +219,27 @@ button[disabled]{
   width: 0px;
   margin: 0px;
   padding: 0px;
+}
+
+.can-flip {
+  transition: .5s ease;
+  transform: scaleX(1);
+}
+
+.is-flipped {
+  transition: .5s ease;
+  transform: scaleX(-1);
+}
+
+.flip-container:hover .can-flip{
+  transform: scaleX(-1);
+}
+
+/* .flip-container:hover .is-flipped{
+  transform: scaleX(1);
+} */
+
+.flip-container {
+  width: 200px;
+  height: 200px;
 }

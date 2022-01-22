@@ -10,6 +10,7 @@ import './App.css';
 // Constants
 const TWITTER_HANDLE = 'CoachChuckFF';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
+const SERVER_PATH = '/server';
 
 const App = () => {
   // State
@@ -19,6 +20,8 @@ const App = () => {
   const [pfpAddress, setPfpAddress] = useState(null);
   const [pfpScale, setPfpScale] = useState(0.15);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [isPfpFlipped, setIsPfpFlipped] = useState(false);
+  const [isMekFlipped, setIsMekFlipped] = useState(false);
   const [buildCount, setBuildCount] = useState(3);
   const [isGettingNFTS, setIsGettingNFTs] = useState(false);
   const [nftList, setNftList] = useState([]);
@@ -131,7 +134,7 @@ const App = () => {
 
   const getCreditsLeft = async () => {
     try {
-      const response = await fetch(`/server/credits`);
+      const response = await fetch(`${SERVER_PATH}/credits`);
       const data = await response.json();
       setCreditsLeft(data.credits);
     } catch {
@@ -141,12 +144,29 @@ const App = () => {
 
   const clearIMG = async () => {
     try {
-      const response = await fetch(`/server/clear/${walletAddress}`);
+      const response = await fetch(`${SERVER_PATH}/clear/${walletAddress}`);
       const data = await response.json();
       console.log(data);
     } catch {
       console.log("Could not grab credits");
     }
+  }
+
+  const isChosenMek = (nft) => {isChosenImg(nft, mekAddress)}
+  const isChosenPFP = (nft) => {isChosenImg(nft, pfpAddress)}
+  const isChosenImg = (nft, slot) => {
+    if(slot == null) return false;
+    if(nft == null) return false;
+    return nft.address == slot.address;
+  }
+
+  const getMekaName = () => {
+    let mek = (mekAddress == null) ? '' : mekAddress.name;
+    let pfp = (pfpAddress == null) ? '' : pfpAddress.name;
+
+    let name = (mek == null) ? '' : 'Meka-';
+    name += (pfp == null) ? '' : pfp.split(' ')[0];
+    return name;
   }
 
   const downloadNewMek = async () => {
@@ -159,7 +179,7 @@ const App = () => {
     } else if(!isBuilding){
       setIsBuilding(true);
       try {
-        const response = await fetch(`/server/sol/${walletAddress}/meka/${mekAddress.address}/pfp/${pfpAddress.address}/scale/${pfpScale}`);
+        const response = await fetch(`${SERVER_PATH}/sol/${walletAddress}/meka/${mekAddress.address}/mekaflip/${isMekFlipped}/pfp/${pfpAddress.address}/pfpflip/${isPfpFlipped}/scale/${pfpScale}`);
         const blob = await response.blob();
 
         if(blob.size < 500){
@@ -170,7 +190,7 @@ const App = () => {
             alert('Error merging NFTs');
           }
         } else {
-          download(blob, "mekamount.png");
+          download(blob, getMekaName() + ".png");
           setBuildCount(buildCount - 1);
           getCreditsLeft();
           clearIMG();
@@ -201,29 +221,16 @@ const App = () => {
   const pfpSort = (nft) => {return !nft.name.includes("Mekamounts");}
   const getPFPList = (sortFunction) => {return nftList.filter(sortFunction);}
 
-  const renderConnectedContainer = () => (
-    <div className="connected-container">
-        <div className="selected-grid">
-        {<div className="selected-item" key={"meka"}>
-          <img src={mekAddress == null ? mekaHolder : mekAddress.url} alt={mekaHolder} />
-          <p className="sub-text">{mekAddress == null ? "" : "Mekamount"}</p>
-        </div>}
-        {<div className="selected-item" key={"pfp"}>
-          <img src={pfpAddress == null ? pfpHolder : pfpAddress.url} alt={pfpHolder} />
-          <p className="sub-text">{pfpAddress == null ? "" : "PFP"}</p>
-        </div>}
-      </div>
-      <div className='mini-spacing'></div>
-      <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isBuilding}>
-        {(isBuilding ? `Building...` : `Build [${buildCount}]`)}
-      </button>
-      <div className='spacing'></div>
-      <p className="sub-text">Hello {walletAddress}</p>
+  const renderNFTContainer = () => (
+    <div>
       <a href='https://www.magiceden.io/marketplace/mekamounts'><p className="sub-text">{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
       <div className="gif-grid">
         {getPFPList(mekSort).map((nft) => (
-          <div className="gif-item" key={nft.url} onClick={() => {selectNFT(nft)}}>
-            <img src={nft.url} alt={nft.url} />
+          <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
+            <div className='overlay'>
+              <img src={nft.url} alt={nft.url}/>
+              <div className={(mekAddress == null) ? 'selection-overlay' : ((mekAddress.address != nft.address) ? 'selection-overlay' : 'selected')}></div>
+            </div>
             <p className="sub-text">{nft.name}</p>
             <div className='mini-spacing'></div>
           </div>
@@ -232,13 +239,51 @@ const App = () => {
       <a href='https://www.magiceden.io/marketplace/pesky_penguins'><p className="sub-text">{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
       <div className="gif-grid">
         {getPFPList(pfpSort).map((nft) => (
-          <div className="gif-item" key={nft.url} onClick={() => {selectNFT(nft)}}>
-            <img src={nft.url} alt={nft.url} />
+          <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
+            <div className='overlay'>
+              <img src={nft.url} alt={nft.url}/>
+              <div className={(pfpAddress == null) ? 'selection-overlay' : ((pfpAddress.address != nft.address) ? 'selection-overlay' : 'selected')}></div>
+            </div>
             <p className="sub-text">{nft.name}</p>
             <div className='mini-spacing'></div>
           </div>
         ))}
       </div>
+    </div>
+  );
+
+  const renderLoadingContainer = () => (
+    <p className="sub-text">Loading NFTs...</p>
+  );
+
+  const renderConnectedContainer = () => (
+    <div className="connected-container">
+        <div className="selected-grid">
+        {<div className="selected-item" key={"meka"}>
+          <div className='flip-container' onClick={() => {setIsMekFlipped(!isMekFlipped);}}>
+            <div class={isMekFlipped ? 'is-flipped' : 'can-flip'}>
+              <img src={mekAddress == null ? mekaHolder : mekAddress.url} alt={mekaHolder} />
+              <p className="sub-text">{mekAddress == null ? "" : "Mekamount"}</p>
+            </div>
+          </div>
+        </div>}
+        {<div className="selected-item" key={"pfp"}>
+        <div className='flip-container' onClick={() => {setIsPfpFlipped(!isPfpFlipped);}}>
+            <div class={isPfpFlipped ? 'is-flipped' : 'can-flip'}>
+              <img src={pfpAddress == null ? pfpHolder : pfpAddress.url} alt={pfpHolder} />
+              <p className="sub-text">{pfpAddress == null ? "" : "PFP"}</p>
+            </div>
+          </div>
+        </div>}
+      </div>
+      <div className='mini-spacing'></div>
+      <p className="sub-text">{(mekAddress == null || pfpAddress == null) ? getMekaName() : getMekaName()}</p>
+      <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isBuilding}>
+        {(isBuilding ? `Building...` : `Build [${buildCount}]`)}
+      </button>
+      <div className='spacing'></div>
+      <p className="sub-text">Hello {walletAddress}</p>
+      {(isGettingNFTS) ? renderLoadingContainer() : renderNFTContainer()}
       <div className='spacing'></div>
     </div>
   );

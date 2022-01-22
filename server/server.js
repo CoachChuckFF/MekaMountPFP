@@ -1,6 +1,6 @@
 const express = require('express');
 const fss = require('fs');
-const meka = require('./createMekamount.js');
+const meka = require('./buildMekamount.js');
 const web3 =  require("@solana/web3.js");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,26 +15,26 @@ function getAttempt(mek, pfp, success, error){
     };
 }
 
-function getRecords(record, user){
-    if(record[user] == null){
-        return record;
+function getReport(report, user){
+    if(report[user] == null){
+        return report;
     } else {
-        return {user : record[user]};
+        return {user : report[user]};
     }
 }
 
-function getBuildCount(record, user){
-    return (record[user] == null) ? 0 : record[user].builds.length;
+function getBuildCount(report, user){
+    return (report[user] == null) ? 0 : report[user].builds.length;
 }
 
-function setRecord(record, user, mek, pfp, success, error){
-    if(record[user] == null){
-        record[user] = {
+function setReport(report, user, mek, pfp, success, error){
+    if(report[user] == null){
+        report[user] = {
             wallet : user,
             builds : [getAttempt(mek, pfp, success, error)] 
         }
     } else {
-        record[user].builds.push(getAttempt(mek, pfp, success, error))
+        report[user].builds.push(getAttempt(mek, pfp, success, error))
     }
 }
 
@@ -49,7 +49,7 @@ async function connectToSolana(){
 
 function spinUpServer(){
     let creditsLeft = 0;
-    let record = {};
+    let report = {};
 
     //Connect To Solana
     let connection = connectToSolana();
@@ -58,25 +58,27 @@ function spinUpServer(){
     app.listen(port, () => console.log(`Listening on port ${port}`));
 
     //Set Hook
-    app.get('/sol/:sol/meka/:meka/pfp/:pfp/scale/:scale', (req, res) => {
+    app.get('/sol/:sol/meka/:meka/mekaflip/:mekaflip/pfp/:pfp/pfpflip/:pfpflip/scale/:scale', (req, res) => {
         try {
             console.log(`-- Buidling for: ${req.params.sol}...`);
             if(creditsLeft > 0){
                 meka.buildMekamount(
                     req.params.sol,
                     req.params.meka,
+                    req.params.mekaflip,
                     req.params.pfp,
+                    req.params.pfpflip,
                     parseFloat(req.params.scale),
-                    parseInt(getBuildCount(req.params.sol)),
+                    parseInt(getBuildCount(report, req.params.sol)),
                     (filepath)=> {
                         creditsLeft--;
                         console.log(`-- SUCCESS for: ${req.params.sol}`);
-                        setRecord(record, req.params.sol, req.params.meka, req.params.pfp, true, "");
+                        setReport(report, req.params.sol, req.params.meka, req.params.pfp, true, "");
                         res.download(filepath);
                     },
                     (error)=>{
                         console.log(`-- FAIL for: ${req.params.sol} (${error})`);
-                        setRecord(record, req.params.sol, req.params.meka, req.params.pfp, false, `(${error})`);
+                        setReport(report, req.params.sol, req.params.meka, req.params.pfp, false, `(${error})`);
                         res.send({ error: error });
                     }
                 );
@@ -113,7 +115,7 @@ function spinUpServer(){
         try{
             if(req.params.pass == "beep"){
                 creditsLeft = (parseInt(req.params.credits) == null) ? 0 : parseInt(req.params.credits);
-                res.send({ added: `${req.params.credits} credits` });
+                res.send({ set: `${req.params.credits} credits` });
             } else {
                 res.send({ naughty : "naughty" });
             }
@@ -122,11 +124,11 @@ function spinUpServer(){
         }
     });
 
-    app.get('/record/:record', (req, res) => {
+    app.get('/report/:user', (req, res) => {
         try{
-            res.send(getRecords(record, req.params.record));
+            res.send(getReport(report, req.params.user));
         } catch (error) {
-            console.log(`Trouble getting record (${error})`);
+            console.log(`Trouble getting report (${error})`);
         }
     });
 
