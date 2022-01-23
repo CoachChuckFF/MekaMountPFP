@@ -94,6 +94,40 @@ function downloadIMG(url, outputPath){
   });
 }
 
+function improveBGAPI(inputPath, shouldReport){
+  return new Promise((resolve, reject) => {
+
+    if(!shouldReport){resolve();}
+
+    const formData = new FormData();
+    formData.append('image_file', fs.createReadStream(inputPath), path.basename(inputPath));
+    formData.append('tag', 'nft-pfps');
+
+    axios({
+      method: 'post',
+      url: 'https://api.remove.bg/v1.0/improve',
+      data: formData,
+      responseType: 'arraybuffer',
+      headers: {
+        ...formData.getHeaders(),
+        'X-Api-Key': 'S73qUka2SUJ1p9KWDEQB4sFk',
+    
+      },
+      encoding: null
+    })
+    .then((response) => {
+      if(response.status != 200){
+        reject(`Need a 200 response! (${response})`);
+      } else {
+        resolve();
+      }
+    })
+    .catch((error) => {
+      reject(`Not enough remove.bg credits. Probably.`);
+    });
+  });
+}
+
 function removeBGAPI(inputPath, outputPath){
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -207,7 +241,7 @@ const pfpCenterX = 355;
 const pfpBottomY = 560;
 function getPFPSize(scale){return Math.round((mekSize * scale)) + (2 * (Math.round(mekSize * scale) % 2));}
 
-function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCrop, pfpScale, buildCount, success, failure){
+function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCrop, pfpScale, buildCount, shouldReport, success, failure){
 
   Promise.all([
     getNFTOwner(mekaNFT),
@@ -274,7 +308,15 @@ function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCro
                   (mekaFliped === 'true') ? 0 : 3,
                   twitterCrop
                 ).then(()=>{
-                  success(finalFilePath);
+                  improveBGAPI(
+                    pfpFilePath,
+                    shouldReport,
+                  ).then(()=>{
+                    success();
+                  })
+                  .catch(()=>{
+                    success();
+                  })
                 })
                 .catch((data) => failure(data));
               })
@@ -299,13 +341,32 @@ function nuke(solAddress){
   .map(file => fs.unlinkSync("./img/" + file));
 }
 
+function improveAI(pfpPath, pfpNFT){
+  return new Promise((resolve, reject) => {
+    fs.copyFile( 
+      pfpFilePath, 
+      `./feedback/bad_pfp_${pfpNFT}.png`, 
+      fs.constants.COPYFILE_EXCL, 
+      ((error)=>{
+        if(error){
+          reject(`Error copying pfp to feedback bucket ${error}`);
+        } else {
+          resolve();
+        }
+      }),
+    );
+  });
+}
+
+// Captain Noot 53jUws4b8ytG17nCd7MPsYxhYwxF515R4AgvBTE3qkUk
 function testBuilder(nukeAfter){
   let solAddress = 'JD5C5Bsp3q9jeC5S57QuSCDDfpeKzXvRkfPB3Td6x3Wh';
   let mekAddress = '5B1QZJYws1Nnp8Kh3FWVoeQbasr5tJeyiZZnWz8sxDZf';
   let isMekFlipped = 'false';
-  let pfpAddress = 'CsTRmLYi8Vgwqwc8fbRG6prAwUakpZRErzp1zXBHZamc';
+  let pfpAddress = '53jUws4b8ytG17nCd7MPsYxhYwxF515R4AgvBTE3qkUk';
   let isPfpFlipped = 'false';
   let isTwitterCropped = 'true';
+  let shouldReport = false;
   let pfpScale = defaultpfpScale;
   let buildCount = 2;
 
@@ -318,6 +379,7 @@ function testBuilder(nukeAfter){
     isTwitterCropped,
     pfpScale,
     buildCount,
+    shouldReport,
     ()=>{
       if(nukeAfter){nuke(solAddress);}
       console.log("SUCCESS");
@@ -326,6 +388,6 @@ function testBuilder(nukeAfter){
   );
 }
 
-// testBuilder(true);
+testBuilder(true);
 
 module.exports = { buildMekamount, nuke, defaultpfpScale, fileTail};

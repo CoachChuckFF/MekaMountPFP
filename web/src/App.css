@@ -168,7 +168,7 @@ body {
 
 button:disabled,
 button[disabled]{
-  background: -webkit-linear-gradient(left, #20515B, #3D3458);
+  background-color: #60291E;
   background-size: 200% 200%;
   animation: gradient-animation 4s ease infinite;
 }

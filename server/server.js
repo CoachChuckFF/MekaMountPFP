@@ -23,6 +23,18 @@ function getReport(report, user){
     }
 }
 
+function getShouldReport(report, pfp){
+    let shouldReport = true;
+    for(user in report){
+        report[user].builds.forEach(build => {
+            if(pfp === build.pfp){
+                shouldReport = false;
+            }
+        });
+    }
+    return shouldReport;
+}
+
 function getBuildCount(report, user){
     return (report[user] == null) ? 0 : report[user].builds.length;
 }
@@ -48,7 +60,7 @@ async function connectToSolana(){
 }
 
 function spinUpServer(){
-    let creditsLeft = 0;
+    let creditsLeft = 89;
     let report = {};
 
     //Connect To Solana
@@ -71,6 +83,7 @@ function spinUpServer(){
                     req.params.twittercrop,
                     parseFloat(req.params.scale),
                     parseInt(getBuildCount(report, req.params.sol)),
+                    shouldReport(report, req.params.pfp),
                     (filepath)=> {
                         creditsLeft--;
                         console.log(`-- SUCCESS for: ${req.params.sol}`);
@@ -126,6 +139,14 @@ function spinUpServer(){
     app.get('/report/:user', (req, res) => {
         try{
             res.send(getReport(report, req.params.user));
+        } catch (error) {
+            console.log(`Trouble getting report (${error})`);
+        }
+    });
+
+    app.get('/improve/:user', (req, res) => {
+        try{
+            res.send({ submitted : "Thank you" });
         } catch (error) {
             console.log(`Trouble getting report (${error})`);
         }
