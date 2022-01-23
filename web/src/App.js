@@ -8,9 +8,12 @@ import download from 'downloadjs';
 import './App.css';
 
 // Constants
+const REAL_SERVER = '/server';
+const TEST_SERVER = '';
+const TEST_JSON = '"proxy": "http://localhost:5000"';
 const TWITTER_HANDLE = 'CoachChuckFF';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
-const SERVER_PATH = '/server';
+const SERVER_PATH = REAL_SERVER;
 
 const App = () => {
   // State
@@ -22,6 +25,7 @@ const App = () => {
   const [isBuilding, setIsBuilding] = useState(false);
   const [isPfpFlipped, setIsPfpFlipped] = useState(false);
   const [isMekFlipped, setIsMekFlipped] = useState(false);
+  const [isTwitterCropped, setIsTwitterCropped] = useState(true);
   const [buildCount, setBuildCount] = useState(3);
   const [isGettingNFTS, setIsGettingNFTs] = useState(false);
   const [nftList, setNftList] = useState([]);
@@ -142,13 +146,13 @@ const App = () => {
     }
   }
 
-  const clearIMG = async () => {
+  const nukeIMG = async () => {
     try {
-      const response = await fetch(`${SERVER_PATH}/clear/${walletAddress}`);
+      const response = await fetch(`${SERVER_PATH}/nuke/${walletAddress}`);
       const data = await response.json();
       console.log(data);
     } catch {
-      console.log("Could not grab credits");
+      console.log("Could not nuke img");
     }
   }
 
@@ -161,11 +165,11 @@ const App = () => {
   }
 
   const getMekaName = () => {
-    let mek = (mekAddress == null) ? '' : mekAddress.name;
-    let pfp = (pfpAddress == null) ? '' : pfpAddress.name;
+    let mek = (mekAddress == null) ? null : mekAddress.name;
+    let pfp = (pfpAddress == null) ? null : pfpAddress.name;
 
-    let name = (mek == null) ? '' : 'Meka-';
-    name += (pfp == null) ? '' : pfp.split(' ')[0];
+    let name = (mek == null) ? ' ' : 'Meka-';
+    name += (pfp == null) ? ' ' : pfp.split(' ')[0];
     return name;
   }
 
@@ -179,7 +183,7 @@ const App = () => {
     } else if(!isBuilding){
       setIsBuilding(true);
       try {
-        const response = await fetch(`${SERVER_PATH}/sol/${walletAddress}/meka/${mekAddress.address}/mekaflip/${isMekFlipped}/pfp/${pfpAddress.address}/pfpflip/${isPfpFlipped}/scale/${pfpScale}`);
+        const response = await fetch(`${SERVER_PATH}/sol/${walletAddress}/meka/${mekAddress.address}/mekaflip/${isMekFlipped}/pfp/${pfpAddress.address}/pfpflip/${isPfpFlipped}/twittercrop/${isTwitterCropped}/scale/${pfpScale}`);
         const blob = await response.blob();
 
         if(blob.size < 500){
@@ -193,7 +197,7 @@ const App = () => {
           download(blob, getMekaName() + ".png");
           setBuildCount(buildCount - 1);
           getCreditsLeft();
-          clearIMG();
+          nukeIMG();
         }
 
       } catch (error) {
@@ -256,6 +260,20 @@ const App = () => {
     <p className="sub-text">Loading NFTs...</p>
   );
 
+  const renderTwitterCropSwitch = () => (
+    <div class="toggle-switch">
+      <p>Crop for Twitter [{`${isTwitterCropped}`}]</p>
+      <label class="switch">
+        <input 
+          type="checkbox" 
+          checked={isTwitterCropped}
+          onChange={()=>setIsTwitterCropped(!isTwitterCropped)}
+        />
+        <span class="slider round"></span>
+      </label>
+    </div>
+  );
+
   const renderConnectedContainer = () => (
     <div className="connected-container">
         <div className="selected-grid">
@@ -277,7 +295,8 @@ const App = () => {
         </div>}
       </div>
       <div className='mini-spacing'></div>
-      <p className="sub-text">{(mekAddress == null || pfpAddress == null) ? getMekaName() : getMekaName()}</p>
+      <p className="sub-text file-name">{(mekAddress == null || pfpAddress == null) ? getMekaName() : getMekaName()}</p>
+      {renderTwitterCropSwitch()}
       <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isBuilding}>
         {(isBuilding ? `Building...` : `Build [${buildCount}]`)}
       </button>

@@ -58,7 +58,7 @@ function spinUpServer(){
     app.listen(port, () => console.log(`Listening on port ${port}`));
 
     //Set Hook
-    app.get('/sol/:sol/meka/:meka/mekaflip/:mekaflip/pfp/:pfp/pfpflip/:pfpflip/scale/:scale', (req, res) => {
+    app.get('/sol/:sol/meka/:meka/mekaflip/:mekaflip/pfp/:pfp/pfpflip/:pfpflip/twittercrop/:twittercrop/scale/:scale', (req, res) => {
         try {
             console.log(`-- Buidling for: ${req.params.sol}...`);
             if(creditsLeft > 0){
@@ -68,6 +68,7 @@ function spinUpServer(){
                     req.params.mekaflip,
                     req.params.pfp,
                     req.params.pfpflip,
+                    req.params.twittercrop,
                     parseFloat(req.params.scale),
                     parseInt(getBuildCount(report, req.params.sol)),
                     (filepath)=> {
@@ -99,15 +100,13 @@ function spinUpServer(){
         }
     });
 
-    app.get('/clear/:clear', (req, res) => {
+    app.get('/nuke/:soladdress', (req, res) => {
         try{
-            fss.readdirSync("./img/")
-                .filter(file => file.includes(req.params.clear))
-                .map(file => fss.unlinkSync("./img/" + file));
+            meka.nuke(req.params.soladdress);
             res.send({ theDeed: "is done" });
-            console.log(`-- CLEARED for: ${req.params.clear}`);
+            console.log(`-- CLEARED for: ${req.params.soladdress}`);
         } catch (error) {
-            console.log(`Trouble clearing mek (${error})`);
+            console.log(`Trouble nuking mek (${error})`);
         }
     });
 

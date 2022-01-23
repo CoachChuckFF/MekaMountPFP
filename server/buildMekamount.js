@@ -148,11 +148,36 @@ function flipIMG(path, shouldFlip){
         });
       })
       .catch(function(error) {
-        reject(`Could not read img for jimp: ${error}`);
+        reject(`Could not read img for jimp flip: ${error}`);
       });
     } else {
       resolve();
     }
+  });
+}
+
+function cropIMG(path, cropSize, quadrant, shouldCrop){
+  return new Promise((resolve, reject) => {
+
+    if(shouldCrop === 'true'){
+      jimp.read(path).then((img)=>{
+        img.crop(
+          (quadrant === 3 || quadrant === 2) ? 0 : cropSize,
+          (quadrant === 3 || quadrant === 0) ? 0 : cropSize, 
+          cropSize, 
+          cropSize
+        )
+        .write(path, (file)=>{
+          resolve();
+        });
+      })
+      .catch(function(error) {
+        reject(`Could not read img for jimp crop: ${error}`);
+      });
+    } else {
+      resolve();
+    }
+
   });
 }
 
@@ -182,7 +207,7 @@ const pfpCenterX = 355;
 const pfpBottomY = 560;
 function getPFPSize(scale){return Math.round((mekSize * scale)) + (2 * (Math.round(mekSize * scale) % 2));}
 
-function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, pfpScale, buildCount, success, failure){
+function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCrop, pfpScale, buildCount, success, failure){
 
   Promise.all([
     getNFTOwner(mekaNFT),
@@ -243,7 +268,15 @@ function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, pfpScale, 
                 pfpBottomY - getPFPSize(pfpScale)
               )
               .then(()=>{
-                success(finalFilePath);
+                cropIMG(
+                  finalFilePath,
+                  mekSize / 2,
+                  (mekaFliped === 'true') ? 0 : 3,
+                  twitterCrop
+                ).then(()=>{
+                  success(finalFilePath);
+                })
+                .catch((data) => failure(data));
               })
               .catch((data) => failure(data));
             })
@@ -260,5 +293,39 @@ function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, pfpScale, 
   .catch((data) => failure(data));
 }
 
+function nuke(solAddress){
+  fs.readdirSync("./img/")
+  .filter(file => file.includes(solAddress))
+  .map(file => fs.unlinkSync("./img/" + file));
+}
 
-module.exports = { buildMekamount, defaultpfpScale, fileTail};
+function testBuilder(nukeAfter){
+  let solAddress = 'JD5C5Bsp3q9jeC5S57QuSCDDfpeKzXvRkfPB3Td6x3Wh';
+  let mekAddress = '5B1QZJYws1Nnp8Kh3FWVoeQbasr5tJeyiZZnWz8sxDZf';
+  let isMekFlipped = 'false';
+  let pfpAddress = 'CsTRmLYi8Vgwqwc8fbRG6prAwUakpZRErzp1zXBHZamc';
+  let isPfpFlipped = 'false';
+  let isTwitterCropped = 'true';
+  let pfpScale = defaultpfpScale;
+  let buildCount = 2;
+
+  buildMekamount(
+    solAddress, 
+    mekAddress, 
+    isMekFlipped,
+    pfpAddress,
+    isPfpFlipped, 
+    isTwitterCropped,
+    pfpScale,
+    buildCount,
+    ()=>{
+      if(nukeAfter){nuke(solAddress);}
+      console.log("SUCCESS");
+    }, 
+    (error)=>{console.log("ERROR " + error);}
+  );
+}
+
+// testBuilder(true);
+
+module.exports = { buildMekamount, nuke, defaultpfpScale, fileTail};
