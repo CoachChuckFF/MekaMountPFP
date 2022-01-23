@@ -378,7 +378,7 @@ const App = () => {
 			{/* This was solely added for some styling fanciness */}
 			<div className={walletAddress ? 'authed-container' : 'container'}>
         <div className="header-container">
-          <p className="header">🦾 Mekamount PFP Portal 🦾</p>
+          <p className="header">🦾 Mekamount PFP Portal 🐦</p>
           <p className="header">[CR Left: {creditsLeft}]</p>
           <p className="sub-text">
             N F T ✨

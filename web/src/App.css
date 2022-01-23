@@ -1,6 +1,13 @@
+body {
+  background-color: #000000;
+}
+
 .App {
   height: 100vh;
-  background-color: #3D3D3D;
+  background-color: #000000;
+  background-image: url("assets/bg.png");
+  background-repeat:no-repeat;
+  background-size:cover;
   overflow: scroll;
   text-align: center;
 }
@@ -59,13 +66,15 @@
 }
 
 .connect-wallet-button {
-  background: -webkit-linear-gradient(left, #1AE38C, #568DC5);
+  /* background: -webkit-linear-gradient(left, #1AE38C, #568DC5); */
+  background-color: #531CF1;
   background-size: 200% 200%;
   animation: gradient-animation 4s ease infinite;
 }
 
 .submit-gif-button {
-  background: -webkit-linear-gradient(left, #568DC5, #923FF2);
+  /* background: -webkit-linear-gradient(left, #568DC5, #923FF2); */
+  background-color: #FF5C38;
   background-size: 200% 200%;
   animation: gradient-animation 4s ease infinite;
   /* margin-left: 10px; */
@@ -298,11 +307,11 @@ button[disabled]{
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #60291E;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+  box-shadow: 0 0 1px #60291E;
 }
 
 input:checked + .slider:before {
