@@ -97,34 +97,36 @@ function downloadIMG(url, outputPath){
 function improveBGAPI(inputPath, shouldReport){
   return new Promise((resolve, reject) => {
 
-    if(!shouldReport){resolve();}
-
-    const formData = new FormData();
-    formData.append('image_file', fs.createReadStream(inputPath), path.basename(inputPath));
-    formData.append('tag', 'nft-pfps');
-
-    axios({
-      method: 'post',
-      url: 'https://api.remove.bg/v1.0/improve',
-      data: formData,
-      responseType: 'arraybuffer',
-      headers: {
-        ...formData.getHeaders(),
-        'X-Api-Key': 'S73qUka2SUJ1p9KWDEQB4sFk',
-    
-      },
-      encoding: null
-    })
-    .then((response) => {
-      if(response.status != 200){
-        reject(`Need a 200 response! (${response})`);
-      } else {
-        resolve();
-      }
-    })
-    .catch((error) => {
-      reject(`Not enough remove.bg credits. Probably.`);
-    });
+    if(shouldReport){
+      const formData = new FormData();
+      formData.append('image_file', fs.createReadStream(inputPath), path.basename(inputPath));
+      formData.append('tag', 'nft-pfps');
+  
+      axios({
+        method: 'post',
+        url: 'https://api.remove.bg/v1.0/improve',
+        data: formData,
+        responseType: 'arraybuffer',
+        headers: {
+          ...formData.getHeaders(),
+          'X-Api-Key': 'S73qUka2SUJ1p9KWDEQB4sFk',
+      
+        },
+        encoding: null
+      })
+      .then((response) => {
+        if(response.status != 200){
+          reject(`Need a 200 response! (${response})`);
+        } else {
+          resolve(true);
+        }
+      })
+      .catch((error) => {
+        reject(`Not enough remove.bg credits. Probably.`);
+      });
+    } else {
+      resolve(false);
+    }
   });
 }
 
@@ -311,12 +313,13 @@ function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCro
                   improveBGAPI(
                     pfpFilePath,
                     shouldReport,
-                  ).then(()=>{
-                    success();
+                  ).then((didReport)=>{
+                    if(didReport){
+                      console.log(`-- REPORTED for: ${pfpNFT}`);
+                    }
+                    success(finalFilePath);
                   })
-                  .catch(()=>{
-                    success();
-                  })
+                  .catch((data) => failure(data));
                 })
                 .catch((data) => failure(data));
               })
@@ -388,6 +391,6 @@ function testBuilder(nukeAfter){
   );
 }
 
-testBuilder(true);
+// testBuilder(true);
 
 module.exports = { buildMekamount, nuke, defaultpfpScale, fileTail};

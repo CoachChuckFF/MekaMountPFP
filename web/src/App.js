@@ -227,7 +227,7 @@ const App = () => {
 
   const renderNFTContainer = () => (
     <div>
-      <a href='https://www.magiceden.io/marketplace/mekamounts'><p className="sub-text">{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
+      <a href='https://www.magiceden.io/marketplace/mekamounts'><p className="file-name">{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
       <div className="gif-grid">
         {getPFPList(mekSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -240,7 +240,7 @@ const App = () => {
           </div>
         ))}
       </div>
-      <a href='https://www.magiceden.io/marketplace/pesky_penguins'><p className="sub-text">{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
+      <a href='https://www.magiceden.io/marketplace/pesky_penguins'><p className="file-name">{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
       <div className="gif-grid">
         {getPFPList(pfpSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -257,19 +257,19 @@ const App = () => {
   );
 
   const renderLoadingContainer = () => (
-    <p className="sub-text">Loading NFTs...</p>
+    <p className="file-name">Loading NFTs...</p>
   );
 
   const renderTwitterCropSwitch = () => (
-    <div class="toggle-switch">
+    <div className="toggle-switch">
       <p>Crop for Twitter [{`${isTwitterCropped}`}]</p>
-      <label class="switch">
+      <label className="switch">
         <input 
           type="checkbox" 
           checked={isTwitterCropped}
           onChange={()=>setIsTwitterCropped(!isTwitterCropped)}
         />
-        <span class="slider round"></span>
+        <span className="slider round"></span>
       </label>
     </div>
   );
@@ -279,7 +279,7 @@ const App = () => {
         <div className="selected-grid">
         {<div className="selected-item" key={"meka"}>
           <div className='flip-container' onClick={() => {setIsMekFlipped(!isMekFlipped);}}>
-            <div class={isMekFlipped ? 'is-flipped' : 'can-flip'}>
+            <div className={isMekFlipped ? 'is-flipped' : 'can-flip'}>
               <img src={mekAddress == null ? mekaHolder : mekAddress.url} alt={mekaHolder} />
               <p className="sub-text">{mekAddress == null ? "" : "Mekamount"}</p>
             </div>
@@ -287,7 +287,7 @@ const App = () => {
         </div>}
         {<div className="selected-item" key={"pfp"}>
         <div className='flip-container' onClick={() => {setIsPfpFlipped(!isPfpFlipped);}}>
-            <div class={isPfpFlipped ? 'is-flipped' : 'can-flip'}>
+            <div className={isPfpFlipped ? 'is-flipped' : 'can-flip'}>
               <img src={pfpAddress == null ? pfpHolder : pfpAddress.url} alt={pfpHolder} />
               <p className="sub-text">{pfpAddress == null ? "" : "PFP"}</p>
             </div>

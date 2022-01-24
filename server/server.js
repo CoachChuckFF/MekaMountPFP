@@ -60,7 +60,7 @@ async function connectToSolana(){
 }
 
 function spinUpServer(){
-    let creditsLeft = 89;
+    let creditsLeft = 0;
     let report = {};
 
     //Connect To Solana
@@ -83,7 +83,7 @@ function spinUpServer(){
                     req.params.twittercrop,
                     parseFloat(req.params.scale),
                     parseInt(getBuildCount(report, req.params.sol)),
-                    shouldReport(report, req.params.pfp),
+                    getShouldReport(report, req.params.pfp),
                     (filepath)=> {
                         creditsLeft--;
                         console.log(`-- SUCCESS for: ${req.params.sol}`);
@@ -102,6 +102,7 @@ function spinUpServer(){
             }
         } catch(error){
             console.log(`-- GLOBAL FAIL for: ${req.params.sol} (${error})`);
+            res.send({ error: error });
         }
     });
 

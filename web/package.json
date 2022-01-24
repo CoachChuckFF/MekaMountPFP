@@ -50,5 +50,5 @@
       "last 1 safari version"
     ]
   }, 
-  "testOnlyProxy": "http://localhost:5000"
+  "-removefortest-proxy": "http://localhost:5000"
 }

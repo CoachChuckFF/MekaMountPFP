@@ -45,6 +45,31 @@ body {
   /* color: -webkit-linear-gradient(left, #1AE38C, #923FF2); */
 }
 
+a {
+  color: #FF5C38;
+  transition: .5s ease;
+}
+
+/* unvisited link */
+a:link {
+  color: #FF5C38;
+}
+
+/* visited link */
+a:visited {
+  color: #FF5C38;
+}
+
+/* mouse over link */
+a:hover {
+  color: white;
+}
+
+/* selected link */
+a:active {
+  color: white;
+}
+
 .gradient-text {
   background: -webkit-linear-gradient(left, #60c657 30%, #35aee2 60%);
   background-clip: text;
