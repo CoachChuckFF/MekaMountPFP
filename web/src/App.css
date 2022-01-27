@@ -45,6 +45,10 @@ body {
   /* color: -webkit-linear-gradient(left, #1AE38C, #923FF2); */
 }
 
+.twitter-link {
+  color: white;
+}
+
 a {
   color: #FF5C38;
   transition: .5s ease;
@@ -109,6 +113,7 @@ a:active {
   display: flex;
   justify-content: center;
   align-items: center;
+  color: white;
   /* position: absolute; */
   width: 100%;
   bottom: 0;
