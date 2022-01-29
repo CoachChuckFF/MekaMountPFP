@@ -76,7 +76,7 @@ const ALERT_INFO = "info";
 const ALERT_SUCCESS = "success";
 
 const ALERT_TX_TIMEOUT = (60000 * 3);
-const ALERT_TIMEOUT = 5000;
+const ALERT_TIMEOUT = 8000;
 
 const App = () => {
   // State
@@ -101,6 +101,7 @@ const App = () => {
   const [snackBarMessage, setSnackBarMessage]           = useState('');
   const [snackBarMessageType, setSnackBarMessageType]   = useState('info');
   const [snackBarTimeout, setsnackBarTimeout]           = useState(ALERT_TX_TIMEOUT);
+  const [snackBarURL, setSnackBarURL]                   = useState(null);
 
   // Sol Stuff
   const LAMPORT_COST = 0.000000001
@@ -167,7 +168,7 @@ const App = () => {
           timeout: ALERT_TX_TIMEOUT,
         });
 
-        await program.rpc.buyCoffee(
+        let tx = await program.rpc.buyCoffee(
           numToRust(solTolamports(sol)),
           {
             accounts: {
@@ -180,9 +181,13 @@ const App = () => {
           }
         );
 
+        console.log(tx);
+
         showSnackBar({
           message: thankYou,
           messageType: ALERT_SUCCESS,
+          timeout: ALERT_TX_TIMEOUT,
+          url: `https://solscan.io/tx/${tx}`
         });
 
         await loadCoffeeJar();
@@ -241,10 +246,10 @@ const App = () => {
         if (solana.isPhantom) {
           const response = await solana.connect({ onlyIfTrusted: onlyIfTrusted });
 
-          showSnackBar({
-            message: "Connected Phantom Wallet! 👻",
-            messageType: ALERT_INFO
-          });
+          // showSnackBar({
+          //   message: "Connected Phantom Wallet! 👻",
+          //   messageType: ALERT_INFO
+          // });
 
           setWalletAddress(response.publicKey.toString());
         }
@@ -401,10 +406,10 @@ const App = () => {
             return a.collection.localeCompare(b.collection);
           });
 
-          showSnackBar({
-            message: 'Got all NFTs!',
-            messageType: ALERT_SUCCESS,
-          });
+          // showSnackBar({
+          //   message: 'Got all NFTs!',
+          //   messageType: ALERT_SUCCESS,
+          // });
 
           //Update
           setNftList(nftMetadata);
@@ -539,15 +544,16 @@ const App = () => {
 
   // Popups
   const redirectToTwitter = () => {
-    window.location.href = TWITTER_LINK; 
+    window.open(TWITTER_LINK, '_blank');
   }
 
   //Snackbar
-  const showSnackBar = ({message = "Hi there", messageType = ALERT_INFO, timeout = ALERT_TIMEOUT}) => {
+  const showSnackBar = ({message = "Hi there", messageType = ALERT_INFO, timeout = ALERT_TIMEOUT, url = null}) => {
     setCoffeeOpen(false);
     setsnackBarTimeout(timeout)
     setSnackBarMessage(message);
     setSnackBarMessageType(messageType);
+    setSnackBarURL(url);
     setSnackBarOpen(true);
   };
 
@@ -560,7 +566,7 @@ const App = () => {
   };
 
   function MessageSnackbar(props) {
-    const { onClose, open, message, messageType, timeout } = props;
+    const { onClose, open, message, messageType, timeout, url } = props;
   
     const handleClose = () => {
       onClose();
@@ -587,10 +593,22 @@ const App = () => {
 
       return "#20515B";
     }
+
+    const goToURL = () => {
+      if(url != null){
+    window.location.href = TWITTER_LINK; 
+
+        window.location.href = url;
+      } else {
+        console.log("hi");
+      }
+    }
   
     const alert = (
-        <Alert variant="filled" severity={typeToSeverity(messageType)} sx={{backgroundColor: typeToColor(messageType)}}>
+        <Alert variant="filled" severity={typeToSeverity(messageType)} sx={{backgroundColor: typeToColor(messageType)}} onClick={goToURL}>
           {message}
+          {(url != null) ? <div style={{width: 5}}></div> : <div></div>}
+          {(url != null) ? <a target="_blank" className='tx-link' href={url}>(See Transaction)</a> : <div></div>}
         </Alert>
     );
   
@@ -611,6 +629,7 @@ const App = () => {
     messageType: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
     timeout: PropTypes.number.isRequired,
+    url: PropTypes.string.isRequired,
   };
 
   //Dialog
@@ -642,39 +661,53 @@ const App = () => {
           },
         }}
       >
-        <DialogTitle sx={{color: '#FAFAFA',}}>
-          Buy Coach a Coffee!
-        </DialogTitle>
+        <DialogTitle sx={{color: '#FAFAFA', textAlign: 'center'}}>Buy Coach a Coffee!</DialogTitle>
         <center>
-          <Tooltip title="Noot Noot">
+          <Tooltip title="Noot Noot!">
             <Avatar alt="Coach Chuck" src={noot} sx={{ width: 89, height: 89, marginBottom: 2, boxShadow: 5}} onClick={redirectToTwitter}/>
           </Tooltip>
         </center>
+        <center>
+        <Tooltip title={(solCount == null) ? 'Connect Wallet' : `${solCount.toFixed(2)} ◎`}>
+          <div>
+            <a className="little-text" href='https://solscan.io/account/7RawqnUsUxA8pnb8nAUTgyzRaLVRYwR9yzPR3gfzbdht' target='_blank'>
+              <p>
+                {'Address: ' + '7RawqnUsUxA8pnb8nAUTgyzRaLVRYwR9yzPR3gfzbdht'.substring(0, 8) + '...'}
+              </p>
+            </a>
+            <a className="little-text" href='https://solscan.io/account/CiC2Mf4LDhvFFHmqPQiENjmJxP1dNEqdLoRXu2GqEDVF' target='_blank'>
+              <p>
+                Caffine Units Given: {(coffeeCount == null) ? '⏳' : `${coffeeCount}!`}
+              </p>
+            </a>
+          </div>
+        </Tooltip>
+        </center>
         <Grid container spacing={0}>
             <Grid item xs={4}>
-            <Tooltip title="+ 1 Fancy 😍">
+            <Tooltip title="+ 1 Fancy 😍 (0.13 ◎)">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyFancyCoffee}>
-                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="lg" className='fa-color'/>
                   <div style={{width: 5}}></div>
-                  <FontAwesomeIcon icon={faCoffeeTogo} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faCoffeeTogo} size="lg" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
             <Grid item xs={4}>
-              <Tooltip title="+ 1 Pot ✨">
+              <Tooltip title="+ 1 Pot ✨ (0.05 ◎)">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeePot}>
-                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="lg" className='fa-color'/>
                   <div style={{width: 5}}></div>
-                  <FontAwesomeIcon icon={faCoffeePot} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faCoffeePot} size="lg" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
             <Grid item xs={4}>
-            <Tooltip title="+ 1 Cup ❤️">
+            <Tooltip title="+ 1 Cup ❤️ (0.03 ◎)">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeeCup}>
-                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="lg" className='fa-color'/>
                   <div style={{width: 5}}></div>
-                  <FontAwesomeIcon icon={faMugHot} size="md" className='fa-color'/>
+                  <FontAwesomeIcon icon={faMugHot} size="lg" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
@@ -705,7 +738,7 @@ const App = () => {
 
   const renderNFTContainer = () => (
     <div>
-      <a href='https://www.magiceden.io/marketplace/mekamounts' className='file-name'><p>{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
+      <a target="_blank" href='https://www.magiceden.io/marketplace/mekamounts' className='file-name'><p>{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
       <div className="gif-grid">
         {getPFPList(mekSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -718,7 +751,7 @@ const App = () => {
           </div>
         ))}
       </div>
-      <a href='https://www.magiceden.io/marketplace/pesky_penguins' className='file-name'><p>{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
+      <a target="_blank" href='https://www.magiceden.io/marketplace/pesky_penguins' className='file-name'><p>{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
       <div className="gif-grid">
         {getPFPList(pfpSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -813,6 +846,7 @@ const App = () => {
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
           <a
+            target="_blank"
             className="footer-text twitter-link"
             href={TWITTER_LINK}
             target="_blank"
@@ -837,6 +871,7 @@ const App = () => {
         messageType={snackBarMessageType}
         message={snackBarMessage}
         timeout={snackBarTimeout}
+        url={snackBarURL}
       />
     </div>
   );

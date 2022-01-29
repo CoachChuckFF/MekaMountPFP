@@ -39,6 +39,11 @@ body {
   color: white;
 }
 
+.little-text {
+  font-size: 13px;
+  color: white;
+}
+
 .file-name {
   font-size: 25px;
   transition: .5s ease;
@@ -54,7 +59,6 @@ body {
 a.file-name:hover {
   color: #FFF;
 }
-
 
 a {
   color: #FF5C38;
@@ -81,6 +85,27 @@ a:hover {
 a:active {
   text-decoration: none;
   color: white;
+}
+
+a.little-text {
+  color: #FFF;
+  text-decoration: none;
+  transition: .5s ease;
+}
+
+a.little-text:hover {
+  color: #FF5C38;
+}
+
+a.tx-link {
+  color: #FFF;
+  font-weight: bold;
+  text-decoration: none;
+  transition: .5s ease;
+}
+
+a.tx-link:hover {
+  color: #FF5C38;
 }
 
 .gradient-text {
