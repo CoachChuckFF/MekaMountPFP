@@ -1,0 +1,95 @@
+{
+    "version": "0.1.0",
+    "name": "buymeasolcoffee",
+    "instructions": [
+      {
+        "name": "startCoffeeJar",
+        "accounts": [
+          {
+            "name": "coffeeJar",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "barista",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": []
+      },
+      {
+        "name": "buyCoffee",
+        "accounts": [
+          {
+            "name": "coffeeJar",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "from",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "to",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "lamports",
+            "type": "u64"
+          }
+        ]
+      }
+    ],
+    "accounts": [
+      {
+        "name": "CoffeeJar",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "coffeeCount",
+              "type": "u64"
+            },
+            {
+              "name": "lamportCount",
+              "type": "u64"
+            },
+            {
+              "name": "barista",
+              "type": "publicKey"
+            }
+          ]
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": 6000,
+        "name": "WrongBarista",
+        "msg": "Tried sending to the wrong barista!"
+      },
+      {
+        "code": 6001,
+        "name": "SomethingBad",
+        "msg": "Naughty"
+      }
+    ],
+    "metadata": {
+      "address": "8LJ1EiaHf38Wsp42fEsAM3PBkED7vruhwosY4CijgnZ3"
+    }
+  }

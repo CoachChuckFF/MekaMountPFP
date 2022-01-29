@@ -41,16 +41,24 @@ body {
 
 .file-name {
   font-size: 25px;
+  transition: .5s ease;
   color: #FF5C38;
   /* color: -webkit-linear-gradient(left, #1AE38C, #923FF2); */
 }
 
-.twitter-link {
-  color: white;
+/* a.file-name {
+  color: #FF5C38;
+  /* color: -webkit-linear-gradient(left, #1AE38C, #923FF2); */
+/* } */
+
+a.file-name:hover {
+  color: #FFF;
 }
+
 
 a {
   color: #FF5C38;
+  text-decoration: none;
   transition: .5s ease;
 }
 
@@ -71,11 +79,12 @@ a:hover {
 
 /* selected link */
 a:active {
+  text-decoration: none;
   color: white;
 }
 
 .gradient-text {
-  background: -webkit-linear-gradient(left, #60c657 30%, #35aee2 60%);
+  background: -webkit-linear-gradient(left, #63FF84 30%, #43D4F2 60%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -96,7 +105,7 @@ a:active {
 
 .connect-wallet-button {
   /* background: -webkit-linear-gradient(left, #1AE38C, #568DC5); */
-  background-color: #531CF1;
+  background-color: #FF5C38;
   background-size: 200% 200%;
   animation: gradient-animation 4s ease infinite;
 }
@@ -118,7 +127,7 @@ a:active {
   width: 100%;
   bottom: 0;
   left: 0;
-  padding-bottom: 45px;
+  padding-bottom: 21px;
 }
 
 .twitter-logo {
@@ -130,6 +139,17 @@ a:active {
   color: white;
   font-size: 16px;
   font-weight: bold;
+} 
+
+a.footer-text {
+  color: white;
+  transition: .5s ease;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+a.footer-text:hover {
+  color: #43D4F2;
 }
 
 .gif-grid {
@@ -357,4 +377,21 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* FAB */
+.fab {
+  position: absolute;
+  right: 3%;
+  bottom: 3%;
+}
+
+.fa-color {
+  color: white
+}
+
+.dialog-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

@@ -1,11 +1,64 @@
 import React, { useEffect, useState } from 'react';
-// import Mekamount, { runScript } from './createMekamount.js';
 import querystring from 'query-string';
 import twitterLogo from './assets/twitter-logo.svg';
 import mekaHolder from './assets/meka.png';
 import pfpHolder from './assets/pfp.png';
+import noot from './assets/noot.png';
 import download from 'downloadjs';
 import './App.css';
+
+//MUI stuff
+import { Fab, Button, Avatar, Tooltip, Grid, Snackbar, Alert, DialogTitle, Dialog } from '@mui/material';
+import PropTypes from 'prop-types';
+import { createTheme } from '@mui/material/styles';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMugHot, faCoffeePot, faCoffeeTogo, faPlus, } from '@fortawesome/pro-regular-svg-icons'
+
+//Sol Stuff
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Program, Provider, web3, BN } from '@project-serum/anchor';
+
+import cjkp from './sol/keypair.json' 
+import idl from './sol/idl.json';
+
+// SystemProgram is a reference to the Solana runtime!
+const { SystemProgram } = web3;
+
+// Create a keypair for the account that will get our coffee jar
+const secretArray = Object.values(cjkp._keypair.secretKey);
+const secret = new Uint8Array(secretArray);
+const coffeeJar = web3.Keypair.fromSecretKey(secret);
+
+// Get our program's id from the IDL file.
+const programID = new PublicKey(idl.metadata.address);
+
+// Set our network to devnet.
+const network = clusterApiUrl('mainnet-beta');
+
+// Controls how we want to acknowledge when a transaction is "done".
+// In product use "finalized"
+const opts = {
+  preflightCommitment: "processed"
+}
+
+//MUI
+const muiTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#FF5C38',
+    },
+  },
+  components: {
+    MuiBackdrop: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FF5C38',
+        },
+      },
+    },
+  },
+});
 
 // Constants
 const REAL_SERVER = '/server';
@@ -15,6 +68,14 @@ const TWITTER_HANDLE = 'CoachChuckFF';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 const SERVER_PATH = REAL_SERVER;
 
+const ALERT_ERROR = "error";
+const ALERT_WARNING = "warning";
+const ALERT_INFO = "info";
+const ALERT_SUCCESS = "success";
+
+const ALERT_TX_TIMEOUT = (60000 * 3);
+const ALERT_TIMEOUT = 5000;
+
 const App = () => {
   // State
   const [creditsLeft, setCreditsLeft] = useState(0);
@@ -22,14 +83,237 @@ const App = () => {
   const [mekAddress, setMekAddress] = useState(null);
   const [pfpAddress, setPfpAddress] = useState(null);
   const [pfpScale, setPfpScale] = useState(0.15);
-  const [isBuilding, setIsBuilding] = useState(false);
+  const [isMounting, setIsMounting] = useState(false);
   const [isPfpFlipped, setIsPfpFlipped] = useState(false);
   const [isMekFlipped, setIsMekFlipped] = useState(false);
   const [isTwitterCropped, setIsTwitterCropped] = useState(true);
-  const [buildCount, setBuildCount] = useState(3);
+  const [mountCount, setMountCount] = useState(3);
   const [isGettingNFTS, setIsGettingNFTs] = useState(false);
   const [nftList, setNftList] = useState([]);
+  const [coffeeCount, setCoffeeCount]     = useState(null);
+  const [solCount, setSolCount]           = useState(null);
+  const [barista, setBarista]             = useState(null);
+  const [coffeeOpen, setCoffeeOpen]       = useState(false);
 
+  const [snackBarOpen, setSnackBarOpen]                 = useState(false);
+  const [snackBarMessage, setSnackBarMessage]           = useState('');
+  const [snackBarMessageType, setSnackBarMessageType]   = useState('info');
+  const [snackBarTimeout, setsnackBarTimeout]           = useState(ALERT_TX_TIMEOUT);
+
+  // Sol Stuff
+  const LAMPORT_COST = 0.000000001
+  const numFromRust = (num) => 
+  {
+    return num.toNumber();
+  }
+  const numToRust = (num) => 
+  {
+    return new BN(Math.round(num));
+  }
+  
+  const solTolamports = (sol) => {
+    return Math.round(sol / LAMPORT_COST);
+  }
+
+  const lamportsToSol = (lamports) => {
+    return parseFloat((lamports * LAMPORT_COST).toFixed(5));
+  }
+
+  // Actions 
+  const getProvider = () => {
+    const connection = new Connection(network, opts.preflightCommitment);
+    const provider = new Provider(
+      connection, window.solana, opts.preflightCommitment,
+    );
+    return provider;
+  }
+
+  const loadCoffeeJar = async () => {
+    try {
+      const provider = getProvider();
+      const program = new Program(idl, programID, provider);
+
+      console.log("🧮 Tabulating Info...");
+      const account = await program.account.coffeeJar.fetch(coffeeJar.publicKey);
+
+      setCoffeeCount(account.coffeeCount.toNumber());
+      setSolCount(lamportsToSol(account.lamportCount));
+      setBarista(account.barista.toString());
+
+      console.log("Coffee Count: ", account.coffeeCount.toNumber());
+      console.log("Sol Collected: ", lamportsToSol(account.lamportCount).toFixed(2));
+      console.log("Barista: ", account.barista.toString());
+
+    } catch (error) {
+      console.log("Error getting coffee jar", error);
+
+      setCoffeeCount(null);
+      setSolCount(lamportsToSol(null));
+      setBarista(null);
+    }
+  }
+
+  const buyCoffee = async (sol, message, thankYou) => {
+    if(sol){
+      try {
+        const provider = getProvider();
+        const program = new Program(idl, programID, provider);
+
+        showSnackBar({
+          message: message,
+          messageType: ALERT_INFO,
+          timeout: ALERT_TX_TIMEOUT,
+        });
+
+        await program.rpc.buyCoffee(
+          numToRust(solTolamports(sol)),
+          {
+            accounts: {
+              coffeeJar: coffeeJar.publicKey,
+              from: provider.wallet.publicKey,
+              to: barista,
+              systemProgram: SystemProgram.programId,
+            },
+            signers: [provider.wallet.Keypair]
+          }
+        );
+
+        showSnackBar({
+          message: thankYou,
+          messageType: ALERT_SUCCESS,
+        });
+
+        await loadCoffeeJar();
+      } catch (error) {
+        console.log("ERROR");
+        showSnackBar({
+          message: "Oh no! Solana spilled the coffee! Oh well! I appreciate the thought!",
+          messageType: ALERT_ERROR,
+        });
+      }
+    }
+  }
+
+  const createCoffeeJar = async () => {
+    try {
+      const provider = getProvider();
+      const program = new Program(idl, programID, provider);
+
+      showSnackBar({
+        message: "☕ Crafting Coffee Jar...",
+        messageType: ALERT_INFO,
+        timeout: ALERT_TX_TIMEOUT,
+      });
+      await program.rpc.startCoffeeJar({
+        accounts: {
+          coffeeJar: coffeeJar.publicKey,                //Web  keypair
+          barista: provider.wallet.publicKey,             //User keypair
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [coffeeJar, provider.wallet.Keypair], //even though the barista is the payer, the coffeejar needs to sign this
+      });  
+
+      showSnackBar({
+        message: "☕ Crafted!",
+        messageType: ALERT_SUCCESS,
+      });
+
+      await loadCoffeeJar();
+    } catch (error) {
+      showSnackBar({
+        message: "Error creating coffeejar",
+        messageType: ALERT_ERROR,
+      });
+    }
+  }
+
+  const checkIfWalletIsConnected = async () => {
+    connectWallet({onlyIfTrusted: true})
+  };
+
+  const connectWallet = async ({onlyIfTrusted = false}) => {
+    try {
+      const { solana } = window;
+
+      if (solana) {
+        if (solana.isPhantom) {
+          const response = await solana.connect({ onlyIfTrusted: onlyIfTrusted });
+
+          showSnackBar({
+            message: "Connected Phantom Wallet! 👻",
+            messageType: ALERT_INFO
+          });
+
+          setWalletAddress(response.publicKey.toString());
+        }
+      } else {
+        showSnackBar({
+          message: "Solana object not found! Get a Phantom Wallet 👻",
+          messageType: ALERT_ERROR
+        });
+      }
+    } catch (error) {
+      console.error(`Error checking wallet [${error}]`);
+    }
+  };
+  
+  // UseEffects
+  useEffect(() => {
+    const onLoad = async () => {
+      await checkIfWalletIsConnected();
+      await getCreditsLeft();
+    };
+    window.addEventListener('load', onLoad);
+    return () => window.removeEventListener('load', onLoad);
+  }, []);
+  
+  useEffect(() => {
+    if (walletAddress) {
+      console.log('Fetching NFTs...');
+      
+      // Call Solana program here.
+      loadCoffeeJar();
+      grabAllNFTs();
+  
+      // Set state
+      // setGifList(TEST_GIFS);
+    }
+  }, [walletAddress]);
+
+  // COFFEE
+  const buyACoffeeForCoach = () => {
+    if(coffeeCount == null && walletAddress != null){
+      createCoffeeJar();
+    } else {
+      handleClickOpen();
+    }
+  }
+
+  const buyFancyCoffee = () => {
+    buyCoffeeWithSol(0.13, "Brewing... A Fancy Coffee!", "Wow a fancy coffee?!? Oh you 🤗");
+  }
+
+  const buyCoffeePot = () => {
+    buyCoffeeWithSol(0.08, "Brewing... A Pot-o-Coffee!", "A whole pot of coffee?! Thank you!");
+  }
+
+  const buyCoffeeCup = () => {
+    buyCoffeeWithSol(0.05, "Brewing... A Cup of Coffee!", "A cup of coffee! Thank you anon!");
+  }
+
+  const buyCoffeeWithSol = (sol, message, thankYou) => {
+    if(walletAddress != null){
+      buyCoffee(sol, message, thankYou);
+    } else {
+      showSnackBar({
+        message: 'Connect your wallet first!',
+        messageType: ALERT_WARNING,
+      });
+      connectWallet();
+    }
+  }
+
+  // Web Stuff
   const getURLData = (baseURL = '', path = '', params = {}) => {
     let requestedURL = baseURL + path + ((params.length == 0) ? "" : "?" + querystring.stringify(params));
     return new Promise((resolve, reject) => {
@@ -115,19 +399,30 @@ const App = () => {
             return a.collection.localeCompare(b.collection);
           });
 
+          showSnackBar({
+            message: 'Got all NFTs!',
+            messageType: ALERT_SUCCESS,
+          });
+
           //Update
           setNftList(nftMetadata);
           setIsGettingNFTs(false);
         })
         .catch((error) => {
-          alert('Could not grab ALL NFTs');
+          showSnackBar({
+            message: 'Error Could not grab ALL NFTs',
+            messageType: ALERT_ERROR,
+          });
           console.log(error);
           setIsGettingNFTs(false);
         })
 
       })
       .catch((error) => {
-        alert('Could not grab NFTs');
+        showSnackBar({
+          message: 'Error Could not grab ALL NFTs',
+          messageType: ALERT_ERROR,
+        });
         console.log(error);
         setIsGettingNFTs(false);
       })
@@ -175,13 +470,27 @@ const App = () => {
 
   const downloadNewMek = async () => {
     if(creditsLeft <= 0){
-      alert('No more community credits! Tweet @Coach Chuck to request more');
-    } else if(buildCount <= 0){
-      alert('No more builds! (But... you could refresh...)');
+      showSnackBar({
+        message: `No more community credits! Ask @Coach Chuck for more`,
+        messageType: ALERT_WARNING
+      });
+    } else if(mountCount <= 0){
+      showSnackBar({
+        message: `No more mounts! (But... you could refresh...)`,
+        messageType: ALERT_WARNING
+      });
     } else if(mekAddress == null || pfpAddress == null){
-      alert('Need to pick both a Mekamount and PFP');
-    } else if(!isBuilding){
-      setIsBuilding(true);
+      showSnackBar({
+        message: 'Need to pick both a Mekamount and PFP',
+        messageType: ALERT_WARNING
+      });
+    } else if(!isMounting){
+      showSnackBar({
+        message: 'Mounting...',
+        messageType: ALERT_INFO,
+        timeout: ALERT_TX_TIMEOUT,
+      });
+      setIsMounting(true);
       try {
         const response = await fetch(`${SERVER_PATH}/sol/${walletAddress}/meka/${mekAddress.address}/mekaflip/${isMekFlipped}/pfp/${pfpAddress.address}/pfpflip/${isPfpFlipped}/twittercrop/${isTwitterCropped}/scale/${pfpScale}`);
         const blob = await response.blob();
@@ -189,28 +498,189 @@ const App = () => {
         if(blob.size < 500){
           const data = await response.json();
           if(data.error != null){
-            alert(data.error);
+            showSnackBar({
+              message: `Error mounting mek [${data.error}]`,
+              messageType: ALERT_ERROR
+            });
           } else {
-            alert('Error merging NFTs');
+            showSnackBar({
+              message: "Error mounting mek [UNKNOWN]",
+              messageType: ALERT_ERROR
+            });
           }
         } else {
           download(blob, getMekaName() + ".png");
-          setBuildCount(buildCount - 1);
+          setMountCount(mountCount - 1);
           getCreditsLeft();
           nukeIMG();
+          showSnackBar({
+            message: `LOCK AND LOAD!`,
+            messageType: ALERT_SUCCESS
+          });
         }
 
       } catch (error) {
-        alert('Error merging NFTs');
+        showSnackBar({
+          message: `Error mounting mek [${error}]`,
+          messageType: ALERT_ERROR
+        });
       }
 
-      setIsBuilding(false);
+      setIsMounting(false);
     } else {
-      alert('Building...');
+      showSnackBar({
+        message: "Still Mounting...",
+        messageType: ALERT_WARNING,
+      });
     }
   };
 
+  // Popups
+  const redirectToTwitter = () => {
+    window.location.href = TWITTER_LINK; 
+  }
 
+  //Snackbar
+  const showSnackBar = ({message = "Hi there", messageType = ALERT_INFO, timeout = ALERT_TIMEOUT}) => {
+    setCoffeeOpen(false);
+    setsnackBarTimeout(timeout)
+    setSnackBarMessage(message);
+    setSnackBarMessageType(messageType);
+    setSnackBarOpen(true);
+  };
+
+  const closeSnackBar = () => {
+    setSnackBarOpen(false);
+  }
+
+  const handleSnackBarClose = () => {
+    closeSnackBar();
+  };
+
+  function MessageSnackbar(props) {
+    const { onClose, open, message, messageType, timeout } = props;
+  
+    const handleClose = () => {
+      onClose();
+    };
+
+    const typeToSeverity = (type) => {
+      switch(type) {
+        case "error": return type;
+        case "warning": return type;
+        case "info": return type;
+        case "success": return type;
+      }
+      return "info";
+    }
+
+    const typeToColor = (type) => {
+      console.log(type);
+      switch(type) {
+        case "error": return "#60291E";
+        case "warning": return "#603A1D";
+        case "info": return "#20515B";
+        case "success": return "#2C6036";
+      }
+
+      return "#20515B";
+    }
+  
+    const alert = (
+        <Alert variant="filled" severity={typeToSeverity(messageType)} sx={{backgroundColor: typeToColor(messageType)}}>
+          {message}
+        </Alert>
+    );
+  
+    return (
+      <div>
+        <Snackbar
+          open={open}
+          autoHideDuration={timeout}
+          onClose={handleClose}
+        >{alert}</Snackbar>
+      </div>
+    );
+  }
+
+  MessageSnackbar.propTypes = {
+    onClose: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
+    messageType: PropTypes.string.isRequired,
+    message: PropTypes.string.isRequired,
+    timeout: PropTypes.number.isRequired,
+  };
+
+  //Dialog
+  const handleClickOpen = () => {
+    closeSnackBar();
+    setCoffeeOpen(true);
+  };
+
+  const handleClose = () => {
+    setCoffeeOpen(false);
+  };
+
+  function BuyCoachACoffeePopup(props) {
+    const { onClose, open } = props;
+
+    const handleClose = () => {
+      onClose();
+    };
+  
+    return (
+      <Dialog 
+        onClose={handleClose} 
+        open={open} 
+        theme={muiTheme}
+        PaperProps={{
+          style: {
+            backgroundColor: '#3E3E3E',
+            boxShadow: 'none',
+          },
+        }}
+      >
+        <DialogTitle sx={{color: '#FAFAFA',}}>
+          Buy Coach a Coffee!
+        </DialogTitle>
+        <center>
+          <Tooltip title="Noot Noot">
+            <Avatar alt="Coach Chuck" src={noot} sx={{ width: 89, height: 89, marginBottom: 2, boxShadow: 5}} onClick={redirectToTwitter}/>
+          </Tooltip>
+        </center>
+        <Grid container spacing={0}>
+            <Grid item xs={4}>
+            <Tooltip title="+ 1 Fancy 😍">
+                <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyFancyCoffee}>
+                  <FontAwesomeIcon icon={faCoffeeTogo} size="lg" className='fa-color'/>
+                </Button>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={4}>
+              <Tooltip title="+ 1 Pot ✨">
+                <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeePot}>
+                  <FontAwesomeIcon icon={faCoffeePot} size="lg" className='fa-color'/>
+                </Button>
+              </Tooltip>
+            </Grid>
+            <Grid item xs={4}>
+            <Tooltip title="+ 1 Cup ❤️">
+                <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeeCup}>
+                  <FontAwesomeIcon icon={faMugHot} size="lg" className='fa-color'/>
+                </Button>
+              </Tooltip>
+            </Grid>
+          </Grid>
+      </Dialog>
+    );
+  }
+
+  BuyCoachACoffeePopup.propTypes = {
+    onClose: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
+  };
+
+  // Renders
   const selectNFT = (nft) => {
 
     if(nft.name.includes("Mekamounts")){
@@ -227,7 +697,7 @@ const App = () => {
 
   const renderNFTContainer = () => (
     <div>
-      <a href='https://www.magiceden.io/marketplace/mekamounts'><p className="file-name">{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
+      <a href='https://www.magiceden.io/marketplace/mekamounts' className='file-name'><p>{getPFPList(mekSort).length > 0 ? "Choose your Mekamount..." : "You have no Mekamounts... "}</p></a>
       <div className="gif-grid">
         {getPFPList(mekSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -240,7 +710,7 @@ const App = () => {
           </div>
         ))}
       </div>
-      <a href='https://www.magiceden.io/marketplace/pesky_penguins'><p className="file-name">{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
+      <a href='https://www.magiceden.io/marketplace/pesky_penguins' className='file-name'><p>{getPFPList(pfpSort).length > 0 ? "Choose your PFP..." : "You have no PFPs..."}</p></a>
       <div className="gif-grid">
         {getPFPList(pfpSort).map((nft) => (
           <div className={"gif-item"} key={nft.url} onClick={() => {selectNFT(nft)}}>
@@ -297,8 +767,8 @@ const App = () => {
       <div className='mini-spacing'></div>
       <p className="sub-text file-name">{(mekAddress == null || pfpAddress == null) ? getMekaName() : getMekaName()}</p>
       {renderTwitterCropSwitch()}
-      <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isBuilding}>
-        {(isBuilding ? `Building...` : `Build [${buildCount}]`)}
+      <button type="submit" className="cta-button submit-gif-button" onClick={downloadNewMek} disabled={isMounting}>
+        {(isMounting ? `Mounting...` : `Mount [${mountCount}]`)}
       </button>
       <div className='spacing'></div>
       <p className="sub-text">Hello {walletAddress}</p>
@@ -306,41 +776,6 @@ const App = () => {
       <div className='spacing'></div>
     </div>
   );
-
-  // Actions
-  const checkIfWalletIsConnected = async () => {
-    try {
-      const { solana } = window;
-
-      if (solana) {
-        if (solana.isPhantom) {
-          console.log('Phantom wallet found!');
-          const response = await solana.connect({ onlyIfTrusted: true });
-          console.log(
-            'Connected with Public Key:',
-            response.publicKey.toString()
-          );
-
-          setWalletAddress(response.publicKey.toString());
-        }
-      } else {
-        alert('Solana object not found! Get a Phantom Wallet 👻');
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const connectWallet = async () => {
-    const { solana } = window;
-  
-    if (solana) {
-      const response = await solana.connect();
-      console.log('Connected with Public Key:', response.publicKey.toString());
-      setWalletAddress(response.publicKey.toString());
-    }
-  };
-
 
   const renderNotConnectedContainer = () => (
     <button
@@ -351,28 +786,7 @@ const App = () => {
     </button>
   );
 
-  // UseEffects
-  useEffect(() => {
-    const onLoad = async () => {
-      await checkIfWalletIsConnected();
-      await getCreditsLeft();
-    };
-    window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
-  }, []);
-  
-  useEffect(() => {
-    if (walletAddress) {
-      console.log('Fetching NFTs...');
-      
-      // Call Solana program here.
-      grabAllNFTs();
-  
-      // Set state
-      // setGifList(TEST_GIFS);
-    }
-  }, [walletAddress]);
-
+  // Main Page
   return (
     <div className="App">
 			{/* This was solely added for some styling fanciness */}
@@ -391,13 +805,31 @@ const App = () => {
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
           <a
-            className="footer-text"
+            className="footer-text twitter-link"
             href={TWITTER_LINK}
             target="_blank"
             rel="noreferrer"
-          >{`Crafted By @${TWITTER_HANDLE}`}</a>
+          >{`Another @${TWITTER_HANDLE} Production`}</a>
         </div>
       </div>
+      <div className='fab'>
+        <Fab color="primary" aria-label="buy" variant="extended" theme={muiTheme} onClick={buyACoffeeForCoach}>
+          <FontAwesomeIcon icon={faPlus} size="xl" className='fa-color'/>
+          <div style={{width: 5}}></div>
+          <FontAwesomeIcon icon={faMugHot} size="xl" className='fa-color'/>
+        </Fab>
+      </div>
+      <BuyCoachACoffeePopup
+        open={coffeeOpen}
+        onClose={handleClose}
+      />
+      <MessageSnackbar
+        open={snackBarOpen}
+        onClose={handleSnackBarClose}
+        messageType={snackBarMessageType}
+        message={snackBarMessage}
+        timeout={snackBarTimeout}
+      />
     </div>
   );
 };
