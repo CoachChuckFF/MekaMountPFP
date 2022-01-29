@@ -230,7 +230,7 @@ const App = () => {
   }
 
   const checkIfWalletIsConnected = async () => {
-    connectWallet({onlyIfTrusted: true})
+    connectWallet({onlyIfTrusted: true});
   };
 
   const connectWallet = async ({onlyIfTrusted = false}) => {
@@ -311,7 +311,7 @@ const App = () => {
         message: 'Connect your wallet first!',
         messageType: ALERT_WARNING,
       });
-      connectWallet();
+      connectWallet({onlyIfTrusted: false});
     }
   }
 
