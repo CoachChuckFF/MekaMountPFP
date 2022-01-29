@@ -27,7 +27,8 @@ const { SystemProgram } = web3;
 // Create a keypair for the account that will get our coffee jar
 const secretArray = Object.values(cjkp._keypair.secretKey);
 const secret = new Uint8Array(secretArray);
-const coffeeJar = web3.Keypair.fromSecretKey(secret);
+const honeyPot = web3.Keypair.fromSecretKey(secret);
+const coffeeJar = new web3.PublicKey("CiC2Mf4LDhvFFHmqPQiENjmJxP1dNEqdLoRXu2GqEDVF");
 
 // Get our program's id from the IDL file.
 const programID = new PublicKey(idl.metadata.address);
@@ -67,6 +68,7 @@ const TEST_JSON = '"proxy": "http://localhost:5000"';
 const TWITTER_HANDLE = 'CoachChuckFF';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 const SERVER_PATH = REAL_SERVER;
+const COFFEE_JAR = "CiC2Mf4LDhvFFHmqPQiENjmJxP1dNEqdLoRXu2GqEDVF";
 
 const ALERT_ERROR = "error";
 const ALERT_WARNING = "warning";
@@ -134,7 +136,7 @@ const App = () => {
       const program = new Program(idl, programID, provider);
 
       console.log("🧮 Tabulating Info...");
-      const account = await program.account.coffeeJar.fetch(coffeeJar.publicKey);
+      const account = await program.account.coffeeJar.fetch(coffeeJar);
 
       setCoffeeCount(account.coffeeCount.toNumber());
       setSolCount(lamportsToSol(account.lamportCount));
@@ -169,7 +171,7 @@ const App = () => {
           numToRust(solTolamports(sol)),
           {
             accounts: {
-              coffeeJar: coffeeJar.publicKey,
+              coffeeJar: coffeeJar,
               from: provider.wallet.publicKey,
               to: barista,
               systemProgram: SystemProgram.programId,
@@ -206,11 +208,11 @@ const App = () => {
       });
       await program.rpc.startCoffeeJar({
         accounts: {
-          coffeeJar: coffeeJar.publicKey,                //Web  keypair
+          coffeeJar: honeyPot.publicKey,                //Web  keypair
           barista: provider.wallet.publicKey,             //User keypair
           systemProgram: SystemProgram.programId,
         },
-        signers: [coffeeJar, provider.wallet.Keypair], //even though the barista is the payer, the coffeejar needs to sign this
+        signers: [honeyPot, provider.wallet.Keypair], //even though the barista is the payer, the coffeejar needs to sign this
       });  
 
       showSnackBar({
@@ -652,21 +654,27 @@ const App = () => {
             <Grid item xs={4}>
             <Tooltip title="+ 1 Fancy 😍">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyFancyCoffee}>
-                  <FontAwesomeIcon icon={faCoffeeTogo} size="lg" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <div style={{width: 5}}></div>
+                  <FontAwesomeIcon icon={faCoffeeTogo} size="md" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
             <Grid item xs={4}>
               <Tooltip title="+ 1 Pot ✨">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeePot}>
-                  <FontAwesomeIcon icon={faCoffeePot} size="lg" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <div style={{width: 5}}></div>
+                  <FontAwesomeIcon icon={faCoffeePot} size="md" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
             <Grid item xs={4}>
             <Tooltip title="+ 1 Cup ❤️">
                 <Button theme={muiTheme} sx={{padding: 2, margin: 1}} variant="contained" onClick={buyCoffeeCup}>
-                  <FontAwesomeIcon icon={faMugHot} size="lg" className='fa-color'/>
+                  <FontAwesomeIcon icon={faPlus} size="md" className='fa-color'/>
+                  <div style={{width: 5}}></div>
+                  <FontAwesomeIcon icon={faMugHot} size="md" className='fa-color'/>
                 </Button>
               </Tooltip>
             </Grid>
