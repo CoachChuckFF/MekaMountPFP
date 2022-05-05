@@ -72,13 +72,16 @@ function getLinkFromSolana(nftAddress){
       });
     
       response.on('end', () => {
-        const metadata = (JSON.parse(Buffer.concat(data).toString())).metadata;
+        try {
+          const metadata = (JSON.parse(Buffer.concat(data).toString())).metadata;
 
-        resolve({
-          "url" : metadata.data.image,
-          "authority" : metadata.updateAuthority,
-        });
-
+          resolve({
+            "url" : metadata.data.image,
+            "authority" : metadata.updateAuthority,
+          });
+        } catch ( error ) {
+          reject(`Could not parse metadata: ${error}`);
+        }
       });
     }).on('error', function(error) { // Handle errors
       reject(`Could not skim solscan: ${error}`);
