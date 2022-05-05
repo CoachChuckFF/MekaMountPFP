@@ -849,22 +849,21 @@ const App = () => {
             target="_blank"
             className="footer-text twitter-link"
             href={TWITTER_LINK}
-            target="_blank"
             rel="noreferrer"
           >{`Another @${TWITTER_HANDLE} Production`}</a>
         </div>
       </div>
-      <div className='fab'>
+      {/* <div className='fab'>
         <Fab color="primary" aria-label="buy" variant="extended" theme={muiTheme} onClick={buyACoffeeForCoach}>
           <FontAwesomeIcon icon={faPlus} size="xl" className='fa-color'/>
           <div style={{width: 5}}></div>
           <FontAwesomeIcon icon={faMugHot} size="xl" className='fa-color'/>
         </Fab>
-      </div>
-      <BuyCoachACoffeePopup
+      </div> */}
+      {/* <BuyCoachACoffeePopup
         open={coffeeOpen}
         onClose={handleClose}
-      />
+      /> */}
       <MessageSnackbar
         open={snackBarOpen}
         onClose={handleSnackBarClose}
