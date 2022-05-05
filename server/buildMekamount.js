@@ -8,7 +8,9 @@ const path = require('path');
 const mergeImages = require('merge-images');
 const sharp = require('sharp');
 const { Canvas, Image } = require('canvas');
-
+const metaplex = require('@metaplex-foundation/mpl-token-metadata');
+const meta = require('@metaplex/js');
+const web3 = require('@solana/web3.js');
 
 function getNFTOwner(nftAddress){
   return new Promise((resolve, reject) => {
@@ -56,40 +58,53 @@ function getNFTOwner(nftAddress){
 
 function getLinkFromSolana(nftAddress){
   return new Promise((resolve, reject) => {
-    const url = {
-      hostname: 'public-api.solscan.io',
-      path: `/account/${nftAddress}`,
-      headers: {
-        'accept': 'application/json'
-      }
-    }
 
-    https.get(url, function(response) {
-      let data = [];
-    
-      response.on('data', chunk => {
-        data.push(chunk);
-      });
-    
-      response.on('end', () => {
-        try {
-          const metadata = (JSON.parse(Buffer.concat(data).toString())).metadata;
+    const tokenAddress = new web3.PublicKey(
+      nftAddress
+    );
 
-          resolve({
-            "url" : metadata.data.image,
-            "authority" : metadata.updateAuthority,
-          });
-        } catch ( error ) {
-          reject(`Could not parse metadata: ${error}`);
-        }
+    const connection = new web3.Connection(
+      web3.clusterApiUrl("mainnet-beta"),
+      "confirmed"
+    );
+
+    meta.programs.metadata.Metadata.findByMint(
+      connection,
+      tokenAddress
+    ).then((meta)=>{
+
+      https.get(meta.data.data.uri, function(response) {
+        let data = [];
+      
+        response.on('data', chunk => {
+          data.push(chunk);
+        });
+      
+        response.on('end', () => {
+          try {
+            const metadata = (JSON.parse(Buffer.concat(data).toString()));
+
+            // console.log(JSON.parse(Buffer.concat(data).toString()));
+
+            // reject("test");
+            resolve({
+              "url" : metadata.image,
+              "authority" : meta.data.updateAuthority,
+            });
+          } catch ( error ) {
+            reject(`Could not parse metadata: ${error}`);
+          }
+        });
+      }).on('error', function(error) { // Handle errors
+        reject(`Could not skim solscan: ${error}`);
       });
-    }).on('error', function(error) { // Handle errors
-      reject(`Could not skim solscan: ${error}`);
-    });
+    }).catch((error)=>{
+      reject(error);
+    })
   });
 }
 
-function downloadIMG(url, outputPath){
+function downloadFile(url, outputPath){
   return new Promise((resolve, reject) => {
     var file = fs.createWriteStream(outputPath);
     https.get(url, function(response) {
@@ -156,7 +171,7 @@ function removeBGAPI(inputPath, outputPath){
       responseType: 'arraybuffer',
       headers: {
         ...formData.getHeaders(),
-        'X-Api-Key': 'S73qUka2SUJ1p9KWDEQB4sFk',
+        'X-Api-Key': 'DS19ymHYciK5NHtdNP8ei9Qc',
     
       },
       encoding: null
@@ -167,6 +182,7 @@ function removeBGAPI(inputPath, outputPath){
       resolve();
     })
     .catch((error) => {
+      console.log(error);
       reject(`Not enough remove.bg credits. Probably.`);
     });
   });
@@ -298,8 +314,8 @@ function buildMekamount(sol, mekaNFT, mekaFliped, pfpNFT, pfpFlipped, twitterCro
       let finalFilePath = `./img/${sol}_${buildCount}_${fileTail}`;
     
       Promise.all([
-        downloadIMG(pfpURL, pfpFilePath),
-        downloadIMG(mekURL, mekFilePath),
+        downloadFile(pfpURL, pfpFilePath),
+        downloadFile(mekURL, mekFilePath),
       ])
       .then(() => {
         removeBGAPI(pfpFilePath, pfpAlphaFilePath)

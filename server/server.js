@@ -3,7 +3,7 @@ const fss = require('fs');
 const meka = require('./buildMekamount.js');
 const web3 =  require("@solana/web3.js");
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 4000;
 
 function getAttempt(mek, pfp, success, error){
     return {
