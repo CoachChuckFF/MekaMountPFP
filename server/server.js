@@ -60,7 +60,7 @@ async function connectToSolana(){
 }
 
 function spinUpServer(){
-    let creditsLeft = 0;
+    let creditsLeft = 100;
     let report = {};
 
     //Connect To Solana
@@ -125,6 +125,7 @@ function spinUpServer(){
     });
 
     app.get('/credits/:credits/pass/:pass', (req, res) => {
+        console.log(`Credit Request [${req.params}]`)
         try{
             if(req.params.pass == "beep"){
                 creditsLeft = (parseInt(req.params.credits) == null) ? 0 : parseInt(req.params.credits);
