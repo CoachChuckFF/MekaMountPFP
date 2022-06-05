@@ -353,14 +353,29 @@ const App = () => {
         let promises = [];
         data.forEach(token => {
           if(token.tokenAmount != null && token.tokenAmount.amount == 1 && token.tokenAmount.decimals == 0){
+          
             promises.push(
-              getURLData(
-                "https://public-api.solscan.io",
-                `/account/${token.tokenAddress}`,
-              )
+              new Promise((resolve, reject)=>{
+                setTimeout(() => {
+                  getURLData(
+                    "https://public-api.solscan.io",
+                    `/account/${token.tokenAddress}`,
+                  ).then((data)=>{
+                    resolve(data);
+                  })
+                  .catch((error)=>{
+                    resolve({});
+                  })
+                }, Math.random() * 100)
+              })
+
             );
           }
         });
+
+        if(promises.length > 50) {
+          alert(`You have ${promises.length} NFTs in your wallet - this will probably go over the solscan pubplic API limit`)
+        }
 
         // Get Metadata on all
         Promise.all(promises)
@@ -368,6 +383,7 @@ const App = () => {
           
           //Grab only the useful stuff
           let nftMetadata = [];
+          console.log(nfts)
           nfts.forEach(nft=> {
             try{
               if(nft.metadata == null){throw new Error('No metadata');}
@@ -452,7 +468,6 @@ const App = () => {
     try {
       const response = await fetch(`${SERVER_PATH}/nuke/${walletAddress}`);
       const data = await response.json();
-      console.log(data);
     } catch {
       console.log("Could not nuke img");
     }
@@ -583,7 +598,6 @@ const App = () => {
     }
 
     const typeToColor = (type) => {
-      console.log(type);
       switch(type) {
         case "error": return "#60291E";
         case "warning": return "#603A1D";
@@ -812,7 +826,7 @@ const App = () => {
         {(isMounting ? `Mounting...` : `Mount [${mountCount}]`)}
       </button>
       <div className='spacing'></div>
-      <p className="sub-text">Hello {walletAddress}</p>
+      <p className="sub-text">For loading NFTs - it's best to move your Mek and PFP to a burner wallet</p>
       {(isGettingNFTS) ? renderLoadingContainer() : renderNFTContainer()}
       <div className='spacing'></div>
     </div>
